@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <psp2/avconfig.h>
 #include <psp2/display.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/sysmem.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/registrymgr.h>
@@ -25,9 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 extern char _binary_font_sfn_start[];
 
-int _newlib_heap_size_user = 4 * 1024;
-
-int main(int argc, char **argv) { (void)argc; (void)argv;
+void _start(int args, void *argp) { (void)args; (void)argp;
 
 	int v;
 	sceRegMgrGetKeyInt("/CONFIG/DISPLAY/", "color_space_mode", &v);
@@ -61,5 +60,5 @@ int main(int argc, char **argv) { (void)argc; (void)argv;
 	sceKernelDelayThread(1 * 1000 * 1000);
 
 done:
-	return 0;
+	sceKernelExitProcess(0);
 }

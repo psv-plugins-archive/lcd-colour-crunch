@@ -58,7 +58,7 @@ set(VPK "${PROJECT_NAME}.vpk")
 
 set(TITLE_NAME "LCD Colour Crunch")
 set(TITLE_ID "AKRK00006")
-set(TITLE_VER "01.01")
+set(TITLE_VER "01.02")
 
 add_executable("${ELF}"
   main.c
@@ -75,7 +75,14 @@ target_link_libraries("${ELF}"
   fnblit
   SceAVConfig_stub
   SceDisplay_stub
+  SceKernelThreadMgr_stub
+  SceLibKernel_stub
   SceRegistryMgr_stub
+  SceSysmem_stub
+)
+
+target_link_options("${ELF}"
+  PRIVATE -nostdlib
 )
 
 add_custom_command(OUTPUT boot_param.bin
