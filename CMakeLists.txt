@@ -27,16 +27,42 @@ include("$ENV{DOLCESDK}/share/dolce.cmake" REQUIRED)
 
 project(LCDColourCrunch LANGUAGES C)
 
+# Build font
+set(FONT_BASE "terminus-font-4.48")
+set(FONT_FILE "ter-u28b.bdf")
+set(SFN_FILE "font.sfn")
+set(SFN_OBJ "${SFN_FILE}.o")
+
+file(DOWNLOAD
+  "https://sourceforge.net/projects/terminus-font/files/${FONT_BASE}/${FONT_BASE}.tar.gz/download"
+  "${FONT_BASE}.tar.gz"
+  EXPECTED_HASH SHA256=34799c8dd5cec7db8016b4a615820dfb43b395575afbb24fc17ee19c869c94af
+)
+
+add_custom_command(OUTPUT "${SFN_FILE}"
+  DEPENDS "${FONT_BASE}.tar.gz"
+  COMMAND tar xzf "${FONT_BASE}.tar.gz" --strip-components=1 "${FONT_BASE}/${FONT_FILE}"
+  COMMAND bit2sfn
+    -r "Basic Latin" "${FONT_FILE}"
+    "${SFN_FILE}"
+)
+
+add_custom_command(OUTPUT "${SFN_OBJ}"
+  DEPENDS "${SFN_FILE}"
+  COMMAND ${CMAKE_LINKER} -r -b binary -o "${SFN_OBJ}" "${SFN_FILE}"
+)
+
 set(ELF "${PROJECT_NAME}.elf")
 set(SELF "${PROJECT_NAME}.self")
 set(VPK "${PROJECT_NAME}.vpk")
 
 set(TITLE_NAME "LCD Colour Crunch")
 set(TITLE_ID "AKRK00006")
-set(TITLE_VER "01.00")
+set(TITLE_VER "01.01")
 
 add_executable("${ELF}"
   main.c
+  "${SFN_OBJ}"
 )
 
 target_compile_options("${ELF}"
@@ -46,7 +72,9 @@ target_compile_options("${ELF}"
 )
 
 target_link_libraries("${ELF}"
+  fnblit
   SceAVConfig_stub
+  SceDisplay_stub
   SceRegistryMgr_stub
 )
 
