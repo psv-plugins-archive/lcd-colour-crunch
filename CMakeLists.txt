@@ -15,19 +15,25 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  if(DEFINED ENV{DOLCESDK})
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{DOLCESDK}/share/dolce.toolchain.cmake" CACHE PATH "toolchain file")
-  else()
-    message(FATAL_ERROR "Please define DOLCESDK to point to your SDK path!")
-  endif()
-endif()
+set(CMAKE_TOOLCHAIN_FILE "$ENV{DOLCESDK}/share/dolce.toolchain.cmake" CACHE PATH "DolceSDK toolchain file")
+set(DOLCESDK_CMAKE_FILE "$ENV{DOLCESDK}/share/dolce.cmake" CACHE PATH "DolceSDK CMake functions file")
+include("${DOLCESDK_CMAKE_FILE}" REQUIRED)
 
-include("$ENV{DOLCESDK}/share/dolce.cmake" REQUIRED)
+project(lcd-colour-crunch LANGUAGES C)
 
-project(LCDColourCrunch LANGUAGES C)
+add_compile_options(
+  -Os -std=c99
+  -Wall -Wextra -Wdouble-promotion -Wshadow -Wundef
+  -fsingle-precision-constant -fno-common -flto
+  -ftree-vectorize -funsafe-math-optimizations
+)
+
+add_link_options(
+  -nostdlib
+)
 
 # Build font
+
 set(FONT_BASE "terminus-font-4.48")
 set(FONT_FILE "ter-u28b.bdf")
 set(SFN_FILE "font.sfn")
@@ -41,34 +47,25 @@ file(DOWNLOAD
 
 add_custom_command(OUTPUT "${SFN_FILE}"
   DEPENDS "${FONT_BASE}.tar.gz"
-  COMMAND tar xzf "${FONT_BASE}.tar.gz" --strip-components=1 "${FONT_BASE}/${FONT_FILE}"
-  COMMAND bit2sfn
-    -r "Basic Latin" "${FONT_FILE}"
-    "${SFN_FILE}"
+  COMMAND "${CMAKE_COMMAND}" -E tar xzf "${FONT_BASE}.tar.gz" "${FONT_BASE}/${FONT_FILE}"
+  COMMAND "${CMAKE_COMMAND}" -E rename "${FONT_BASE}/${FONT_FILE}" "${FONT_FILE}"
+  COMMAND bit2sfn -r "Basic Latin" "${FONT_FILE}" "${SFN_FILE}"
 )
 
 add_custom_command(OUTPUT "${SFN_OBJ}"
   DEPENDS "${SFN_FILE}"
-  COMMAND ${CMAKE_LINKER} -r -b binary -o "${SFN_OBJ}" "${SFN_FILE}"
+  COMMAND "${CMAKE_LINKER}" --relocatable --format=binary --output="${SFN_OBJ}" "${SFN_FILE}"
 )
 
-set(ELF "${PROJECT_NAME}.elf")
-set(SELF "${PROJECT_NAME}.self")
-set(VPK "${PROJECT_NAME}.vpk")
+# Build self
 
-set(TITLE_NAME "LCD Colour Crunch")
-set(TITLE_ID "AKRK00006")
-set(TITLE_VER "01.02")
+set(ELF "lcd-colour-crunch.elf")
+set(SELF "lcd-colour-crunch.self")
+set(BOOTPARAM "${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin")
 
 add_executable("${ELF}"
   main.c
   "${SFN_OBJ}"
-)
-
-target_compile_options("${ELF}"
-  PRIVATE -O3 -std=c99
-  PRIVATE -Wall -Wextra -Wdouble-promotion -Wshadow -Wundef
-  PRIVATE -fsingle-precision-constant -fno-common
 )
 
 target_link_libraries("${ELF}"
@@ -81,23 +78,24 @@ target_link_libraries("${ELF}"
   SceSysmem_stub
 )
 
-target_link_options("${ELF}"
-  PRIVATE -nostdlib
-)
-
-add_custom_command(OUTPUT boot_param.bin
-  COMMAND dolce-make-bootparam app_memsize 0x1000 boot_param.bin
+add_custom_command(OUTPUT "${BOOTPARAM}"
+  COMMAND dolce-make-bootparam app_memsize 0x1000 "${BOOTPARAM}"
 )
 
 dolce_create_self("${SELF}"
   "${ELF}"
   UNSAFE
-  BOOT_PARAM ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
+  BOOT_PARAM "${BOOTPARAM}"
 )
 
-dolce_create_vpk("${VPK}"
-  "${TITLE_ID}"
-  "${SELF}"
+# Build VPK
+
+set(VPK "lcd-colour-crunch.vpk")
+set(TITLE_NAME "LCD Colour Crunch")
+set(TITLE_ID "AKRK00006")
+set(TITLE_VER "01.02")
+
+dolce_create_vpk("${VPK}" "${TITLE_ID}" "${SELF}"
   NAME "${TITLE_NAME}"
   VERSION "${TITLE_VER}"
 )
