@@ -130,3 +130,7 @@ dolce_create_vpk("${VPK}" "${TITLE_ID}" "${SELF}"
   NAME "${TITLE_NAME}"
   VERSION "${TITLE_VER}"
 )
+
+# Build kernel module for PSPEmu
+
+add_subdirectory(pspemu-colour-crunch)
