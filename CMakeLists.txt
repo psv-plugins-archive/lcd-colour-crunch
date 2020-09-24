@@ -70,12 +70,13 @@ add_executable("${ELF}"
 
 target_link_libraries("${ELF}"
   fnblit
+
   SceAVConfig_stub
-  SceDisplay_stub
-  SceKernelThreadMgr_stub
+  SceDisplayUser_stub
   SceLibKernel_stub
-  SceRegistryMgr_stub
+  SceRegMgr_stub
   SceSysmem_stub
+  SceThreadmgr_stub
 )
 
 add_custom_command(OUTPUT "${BOOTPARAM}"
