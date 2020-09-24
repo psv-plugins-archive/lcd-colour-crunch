@@ -19,6 +19,9 @@ set(CMAKE_TOOLCHAIN_FILE "$ENV{DOLCESDK}/share/dolce.toolchain.cmake" CACHE PATH
 set(DOLCESDK_CMAKE_FILE "$ENV{DOLCESDK}/share/dolce.cmake" CACHE PATH "DolceSDK CMake functions file")
 include("${DOLCESDK_CMAKE_FILE}" REQUIRED)
 
+option(CMAKE_TLS_VERIFY "Verify TLS" ON)
+include(ExternalProject REQUIRED)
+
 project(lcd-colour-crunch LANGUAGES C)
 
 add_compile_options(
@@ -30,6 +33,32 @@ add_compile_options(
 
 add_link_options(
   -nostdlib
+)
+
+# External dependencies
+
+set(DEP_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dep")
+include_directories("${DEP_INSTALL_PREFIX}/include")
+link_directories("${DEP_INSTALL_PREFIX}/lib")
+
+ExternalProject_Add(dep-fnblit
+  URL https://git.shotatoshounenwachigau.moe/vita/fnblit/snapshot/fnblit-master.tar.gz
+  PREFIX dep/fnblit
+  CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEP_INSTALL_PREFIX}
+  SOURCE_SUBDIR fnblit
+  EXCLUDE_FROM_ALL ON
+)
+
+ExternalProject_Add(dep-sfnconv
+  URL https://git.shotatoshounenwachigau.moe/vita/fnblit/snapshot/fnblit-master.tar.gz
+  PREFIX dep/sfnconv
+  CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEP_INSTALL_PREFIX}
+  SOURCE_SUBDIR sfnconv
+  EXCLUDE_FROM_ALL ON
+)
+
+add_custom_target(dep-all
+  DEPENDS dep-fnblit dep-sfnconv
 )
 
 # Build font
@@ -49,7 +78,8 @@ add_custom_command(OUTPUT "${SFN_FILE}"
   DEPENDS "${FONT_BASE}.tar.gz"
   COMMAND "${CMAKE_COMMAND}" -E tar xzf "${FONT_BASE}.tar.gz" "${FONT_BASE}/${FONT_FILE}"
   COMMAND "${CMAKE_COMMAND}" -E rename "${FONT_BASE}/${FONT_FILE}" "${FONT_FILE}"
-  COMMAND bit2sfn -r "Basic Latin" "${FONT_FILE}" "${SFN_FILE}"
+  COMMAND "${CMAKE_COMMAND}" -E env PATH="${DEP_INSTALL_PREFIX}/bin:$ENV{PATH}"
+    bit2sfn -r "Basic Latin" "${FONT_FILE}" "${SFN_FILE}"
 )
 
 add_custom_command(OUTPUT "${SFN_OBJ}"
