@@ -15,50 +15,32 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <wchar.h>
+
 #include <psp2/avconfig.h>
-#include <psp2/display.h>
-#include <psp2/kernel/clib.h>
 #include <psp2/kernel/processmgr.h>
-#include <psp2/kernel/sysmem.h>
-#include <psp2/kernel/threadmgr.h>
+#include <psp2/notification_util.h>
 #include <psp2/registrymgr.h>
-#include "fnblit.h"
+#include <psp2/scebase.h>
+#include <psp2/sysmodule.h>
 
-extern char _binary_font_sfn_start[];
-
-void _start(int args, void *argp) { (void)args; (void)argp;
+void _start(void) {
 
 	int v;
 	sceRegMgrGetKeyInt("/CONFIG/DISPLAY/", "color_space_mode", &v);
 	sceAVConfigSetDisplayColorSpaceMode(!v);
 	sceRegMgrSetKeyInt("/CONFIG/DISPLAY/", "color_space_mode", !v);
 
-	SceUID mem_id = sceKernelAllocMemBlock(
-		"FramebufferMem",
-		SCE_KERNEL_MEMBLOCK_TYPE_USER_RW_UNCACHE,
-		SCE_KERNEL_2MiB,
-		NULL);
-	if (mem_id < 0) { goto done; }
-	void *fb_base;
-	sceKernelGetMemBlockBase(mem_id, &fb_base);
-	sceClibMemset(fb_base, 0x00, SCE_KERNEL_2MiB);
+	int ret = sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL);
+	if (ret == SCE_OK) {
+		SceNotificationUtilSendParam sendParam = {0};
+		swprintf(
+			sendParam.text,
+			SCE_NOTIFICATION_UTIL_TEXT_MAX + 1,
+			u"LCD set to %s mode",
+			!v ? "OLED emulation" : "original");
+		sceNotificationUtilSendNotification(&sendParam);
+	}
 
-	fnblit_set_font(_binary_font_sfn_start);
-	fnblit_set_fg(0xFFFFFFFF);
-	fnblit_set_bg(0x00000000);
-	fnblit_set_fb(fb_base, 960, 960, 544);
-	fnblit_printf(10, 10, "LCD colour space set to %s mode", !v ? "OLED emulation" : "original");
-	SceDisplayFrameBuf fb = {
-		sizeof(fb),
-		fb_base,
-		960,
-		SCE_DISPLAY_PIXELFORMAT_A8B8G8R8,
-		960,
-		544,
-	};
-	sceDisplaySetFrameBuf(&fb, SCE_DISPLAY_SETBUF_NEXTFRAME);
-	sceKernelDelayThread(1 * 1000 * 1000);
-
-done:
 	sceKernelExitProcess(0);
 }
