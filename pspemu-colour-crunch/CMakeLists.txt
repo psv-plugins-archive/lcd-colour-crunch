@@ -1,5 +1,7 @@
-# This file is part of LCD Colour Crunch
+#
 # Copyright © 2020 浅倉麗子
+#
+# This file is part of LCD Colour Crunch
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 
 add_link_options(
   --entry=module_start

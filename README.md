@@ -20,17 +20,7 @@ Open LCD Colour Crunch to toggle between original mode and OLED emulation mode. 
 Dependencies:
 
 - [DolceSDK](https://forum.devchroma.nl/index.php/topic,129.0.html)
-- [fnblit and bit2sfn](https://git.shotatoshounenwachigau.moe/vita/fnblit)
 - [taiHEN](https://git.shotatoshounenwachigau.moe/vita/taihen)
-- [Terminus font](http://terminus-font.sourceforge.net)
-
-To build dependencies, application, and module:
-
-```sh
-cmake .
-make dep-all
-make
-```
 
 ## Contributing
 
