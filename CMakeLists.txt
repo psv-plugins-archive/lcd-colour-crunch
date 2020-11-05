@@ -78,6 +78,9 @@ set(TITLE_VER "01.03")
 dolce_create_vpk("${VPK}" "${TITLE_ID}" "${SELF}"
   NAME "${TITLE_NAME}"
   VERSION "${TITLE_VER}"
+  FILE
+    right.txt sce_sys/about/right.txt
+    right.gim sce_sys/about/right.gim
 )
 
 # Build kernel module for PSPEmu
